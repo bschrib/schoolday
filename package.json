@@ -1,0 +1,10 @@
+{
+  "name": "schoolday",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Schoolday — a daily school-load ledger that pulls assignments from Infinity Campus / PowerSchool and keeps the week honest.",
+  "scripts": {
+    "start": "node src/server.js"
+  }
+}

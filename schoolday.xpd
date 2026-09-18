@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<App>
+  <Name>Schoolday</Name>
+  <Title>Schoolday - School Load Tracker</Title>
+  <Description>Daily school-load ledger. Pulls assignments from Infinity Campus / PowerSchool on a schedule (durable queue + event bus) and serves a designed website on the LAN. Single container, SQLite volume, zero dependencies.</Description>
+  <NewURL>https://github.com/bschrib/schoolday</NewURL>
+  <Category>Application/Service</Category>
+  <DockerImg>schoolday:latest</DockerImg>
+  <DockerRunCmd>run</DockerRunCmd>
+  <DockerRunName>schoolday</DockerRunName>
+  <DockerRunPorts>4180:4180</DockerRunPorts>
+  <DockerRunVolume>/opt/schoolday/data:/app/data</DockerRunVolume>
+  <DockerRunEnv>STUDENT_NAME:Avery</DockerRunEnv>
+  <DockerRunEnv>SCHOOL_NAME:Riverside Middle School</DockerRunEnv>
+  <DockerRunEnv>PROVIDER:demo</DockerRunEnv>
+  <DockerRunRestart>unless-stopped</DockerRunRestart>
+</App>

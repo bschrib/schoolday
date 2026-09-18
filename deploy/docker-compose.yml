@@ -1,0 +1,17 @@
+services:
+  schoolday:
+    build: ..
+    image: schoolday:latest
+    container_name: schoolday
+    restart: unless-stopped
+    env_file: ./creds.env
+    environment:
+      - PORT=4180
+      - PROVIDER=infinitecampus
+    volumes:
+      - schoolday-data:/app/data
+    ports:
+      - "4180:4180"
+
+volumes:
+  schoolday-data:

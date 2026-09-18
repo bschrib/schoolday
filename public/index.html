@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schoolday</title>
+  <meta name="description" content="A daily ledger of the school load — assignments pulled from Infinity Campus, kept honest.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="masthead reveal">
+      <div class="mast-left">
+        <div class="wordmark">Schoolday</div>
+        <div class="mast-date" id="mastDate">—</div>
+        <div class="student-chips" id="studentChips" hidden></div>
+      </div>
+      <div class="mast-load">
+        <div class="load-index">
+          <span class="load-number" id="loadNumber">–</span>
+          <span class="load-scale">/100</span>
+        </div>
+        <div class="load-meta">
+          <span class="load-label" id="loadLabel">—</span>
+          <span class="load-sub" id="loadSub">—</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <main class="main">
+        <section class="section reveal" id="sec-today">
+          <div class="kicker"><span class="kicker-num">01</span> Today <span class="kicker-rule"></span></div>
+          <div class="dayband" id="dayband" aria-label="Today's assignments on a time band"></div>
+          <div class="ledger" id="ledgerToday"></div>
+        </section>
+
+        <section class="section reveal" id="sec-ahead">
+          <div class="kicker"><span class="kicker-num">02</span> Ahead <span class="kicker-rule"></span></div>
+          <div id="ledgerNext"></div>
+        </section>
+
+        <section class="section reveal" id="sec-week">
+          <div class="kicker"><span class="kicker-num">03</span> The week <span class="kicker-rule"></span></div>
+          <div class="bars" id="subjectBars"></div>
+          <div class="heaviest" id="heaviest"></div>
+        </section>
+
+        <section class="section reveal" id="sec-messages">
+          <div class="kicker"><span class="kicker-num">04</span> School &amp; family <span class="kicker-rule"></span></div>
+          <div class="msg-subhead">From the feeds</div>
+          <div class="msg-list" id="msgFeeds"></div>
+          <div class="msg-subhead">Direct messages</div>
+          <div class="msg-list" id="msgThreads"></div>
+          <div class="msg-status" id="msgStatus"></div>
+        </section>
+      </main>
+
+      <aside class="rail reveal">
+        <div class="rail-block">
+          <div class="kicker small"><span class="kicker-num">05</span> System <span class="kicker-rule"></span></div>
+          <dl class="sync">
+            <div><dt>Source</dt><dd id="syncSource">—</dd></div>
+            <div><dt>Last pull</dt><dd id="syncLast">—</dd></div>
+            <div><dt>Next poll</dt><dd id="syncNext">—</dd></div>
+            <div><dt>Queue</dt><dd id="queueDepth">—</dd></div>
+          </dl>
+          <button class="pull" id="pullBtn" type="button">Pull now</button>
+          <div class="events" id="events"></div>
+        </div>
+        <footer class="foot">schoolday · node + sqlite · zero dependencies</footer>
+      </aside>
+    </div>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>
