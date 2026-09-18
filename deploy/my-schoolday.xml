@@ -1,0 +1,24 @@
+<Container version="2">
+  <Name>schoolday</Name>
+  <Repository>schoolday:latest</Repository>
+  <Registry />
+  <Network />
+  <Privileged>false</Privileged>
+  <Support />
+  <Overview>Daily school-load ledger. Pulls assignments from Infinite Campus (session login) and ParentSquare (feeds + direct messages) on a schedule, and serves the site on the LAN. Source: https://github.com/bschrib/schoolday</Overview>
+  <ExtraParams>--restart unless-stopped</ExtraParams>
+  <WebUI>http://[IP]:[PORT:4180]</WebUI>
+  <Icon>https://raw.githubusercontent.com/bschrib/schoolday/main/deploy/icon.png</Icon>
+  <Config Name="Port" Target="4180" Default="4180" Mode="tcp" Description="LAN site" Type="Port" Display="always" Required="true" Mask="false">4180</Config>
+  <Config Name="/app/data" Target="/app/data" Default="/opt/schoolday/data" Mode="rw" Description="SQLite data" Type="Path" Display="always" Required="true" Mask="false">/opt/schoolday/data</Config>
+  <Config Name="PROVIDER" Target="PROVIDER" Default="infinitecampus" Mode="" Description="Assignment source" Type="Env" Display="always" Required="false" Mask="false">infinitecampus</Config>
+  <Config Name="IC_BASE_URL" Target="IC_BASE_URL" Default="https://dublincityoh.infinitecampus.org" Mode="" Description="Infinite Campus portal base" Type="Env" Display="always" Required="false" Mask="false">https://dublincityoh.infinitecampus.org</Config>
+  <Config Name="IC_APP_NAME" Target="IC_APP_NAME" Default="dublincity" Mode="" Description="Portal app name" Type="Env" Display="always" Required="false" Mask="false">dublincity</Config>
+  <Config Name="IC_USERNAME" Target="IC_USERNAME" Default="tytalus" Mode="" Description="Parent portal username" Type="Env" Display="always" Required="false" Mask="false">tytalus</Config>
+  <Config Name="IC_PASSWORD" Target="IC_PASSWORD" Default="zpu-wbp8xhd0FWD-zym" Mode="" Description="Parent portal password" Type="Env" Display="always" Required="false" Mask="false">zpu-wbp8xhd0FWD-zym</Config>
+  <Config Name="PS_BASE_URL" Target="PS_BASE_URL" Default="https://www.parentsquare.com" Mode="" Description="ParentSquare base" Type="Env" Display="always" Required="false" Mask="false">https://www.parentsquare.com</Config>
+  <Config Name="PS_SCHOOL_ID" Target="PS_SCHOOL_ID" Default="52355" Mode="" Description="ParentSquare school id" Type="Env" Display="always" Required="false" Mask="false">52355</Config>
+  <Config Name="PS_USER_ID" Target="PS_USER_ID" Default="63826416" Mode="" Description="ParentSquare account user id" Type="Env" Display="always" Required="false" Mask="false">63826416</Config>
+  <Config Name="PS_EMAIL" Target="PS_EMAIL" Default="bschrib@gmail.com" Mode="" Description="ParentSquare email" Type="Env" Display="always" Required="false" Mask="false">bschrib@gmail.com</Config>
+  <Config Name="PS_PASSWORD" Target="PS_PASSWORD" Default="fqa6fqt8mqv_QGQ0rkz" Mode="" Description="ParentSquare password" Type="Env" Display="always" Required="false" Mask="false">fqa6fqt8mqv_QGQ0rkz</Config>
+</Container>
