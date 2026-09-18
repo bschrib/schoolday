@@ -233,6 +233,7 @@ function state() {
     },
     messages: cachedMessages(studentPSchoolId()),
     portal: provider.portal ? { label: provider.label, url: provider.portal } : null,
+    psBase: process.env.PS_BASE_URL || '',
     sync: {
       source: provider.label,
       provider: provider.name,

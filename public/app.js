@@ -163,9 +163,19 @@ function rowEl(row) {
   est.textContent = fmtMins(row.estMinutes);
 
   const stamp = document.createElement('span');
-  const overdue = !row.done && new Date(row.due) < new Date();
+  const now = new Date();
+  const overdue = !row.done && new Date(row.due) < now;
   stamp.className = 'stamp ' + (row.done ? 'done' : overdue ? 'over' : 'due');
-  stamp.textContent = row.done ? 'Done' : overdue ? 'Overdue' : row.dueLabel;
+  if (row.done) {
+    stamp.textContent = 'Done';
+  } else if (overdue) {
+    const daysLate = Math.floor((now - new Date(row.due)) / 86400000);
+    stamp.textContent = daysLate >= 1
+      ? `${daysLate}d late · ${whenLabel(row.dueKey)}`
+      : `Overdue · ${row.dueLabel}`;
+  } else {
+    stamp.textContent = row.dueLabel;
+  }
 
   el.append(toggle, subj, main, est, stamp);
   return el;
@@ -345,8 +355,14 @@ function renderMessages(s) {
   }
   if (m.error) status.textContent = `ParentSquare: ${m.error}`;
   for (const p of (m.feeds || []).slice(0, 5)) {
-    const el = document.createElement('div');
-    el.className = 'msg-item';
+    const linked = Boolean(p.href && s.psBase);
+    const el = document.createElement(linked ? 'a' : 'div');
+    el.className = 'msg-item' + (linked ? ' ext' : '');
+    if (linked) {
+      el.href = s.psBase + p.href;
+      el.target = '_blank';
+      el.rel = 'noopener';
+    }
     const head = document.createElement('div');
     head.className = 'msg-head';
     const title = document.createElement('span');
@@ -371,8 +387,14 @@ function renderMessages(s) {
   }
   if ((m.feeds || []).length === 0 && !m.error) status.textContent = 'No feed posts right now.';
   for (const t of (m.threads || [])) {
-    const el = document.createElement('div');
-    el.className = 'msg-item';
+    const linked = Boolean(t.href && s.psBase);
+    const el = document.createElement(linked ? 'a' : 'div');
+    el.className = 'msg-item' + (linked ? ' ext' : '');
+    if (linked) {
+      el.href = s.psBase + t.href;
+      el.target = '_blank';
+      el.rel = 'noopener';
+    }
     const head = document.createElement('div');
     head.className = 'msg-head';
     const who = document.createElement('span');

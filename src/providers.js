@@ -379,7 +379,7 @@ async function psFeeds(schoolId) {
       const end = block.indexOf('<ul class="nav nav-pills"', tagEnd);
       excerpt = stripTags(block.slice(tagEnd + 1, end > 0 ? end : block.length)).slice(0, 200);
     }
-    posts.push({ id, title, from, when, excerpt });
+    posts.push({ id, title, from, when, excerpt, href: `/feeds/${id}` });
   }
   return { school, posts };
 }

@@ -572,6 +572,23 @@ body {
 
 .msg-item:last-child { border-bottom: none; }
 
+.msg-item.ext {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
+
+.msg-item.ext .msg-title::after {
+  content: ' \2197';
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+
+.msg-item.ext:hover .msg-title { text-decoration: underline; }
+.msg-item.ext:hover .msg-title::after { opacity: 1; }
+
 .msg-head {
   display: flex;
   justify-content: space-between;
