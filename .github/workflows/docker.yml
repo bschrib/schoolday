@@ -16,6 +16,6 @@ jobs:
           password: ${{ github.token }}
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ${{ github.workspace }}
           push: true
           tags: ghcr.io/bschrib/schoolday:latest
