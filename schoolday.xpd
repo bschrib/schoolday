@@ -5,13 +5,20 @@
   <Description>Daily school-load ledger. Pulls assignments from Infinity Campus / PowerSchool on a schedule (durable queue + event bus) and serves a designed website on the LAN. Single container, SQLite volume, zero dependencies.</Description>
   <NewURL>https://github.com/bschrib/schoolday</NewURL>
   <Category>Application/Service</Category>
-  <DockerImg>schoolday:latest</DockerImg>
+  <DockerImg>ghcr.io/bschrib/schoolday:latest</DockerImg>
   <DockerRunCmd>run</DockerRunCmd>
   <DockerRunName>schoolday</DockerRunName>
   <DockerRunPorts>4180:4180</DockerRunPorts>
   <DockerRunVolume>/opt/schoolday/data:/app/data</DockerRunVolume>
-  <DockerRunEnv>STUDENT_NAME:Avery</DockerRunEnv>
-  <DockerRunEnv>SCHOOL_NAME:Riverside Middle School</DockerRunEnv>
-  <DockerRunEnv>PROVIDER:demo</DockerRunEnv>
+  <DockerRunEnv>PROVIDER:infinitecampus</DockerRunEnv>
+  <DockerRunEnv>IC_BASE_URL:https://dublincityoh.infinitecampus.org</DockerRunEnv>
+  <DockerRunEnv>IC_APP_NAME:dublincity</DockerRunEnv>
+  <DockerRunEnv>IC_USERNAME:tytalus</DockerRunEnv>
+  <DockerRunEnv>IC_PASSWORD:zpu-wbp8xhd0FWD-zym</DockerRunEnv>
+  <DockerRunEnv>PS_BASE_URL:https://www.parentsquare.com</DockerRunEnv>
+  <DockerRunEnv>PS_SCHOOL_ID:52355</DockerRunEnv>
+  <DockerRunEnv>PS_USER_ID:63826416</DockerRunEnv>
+  <DockerRunEnv>PS_EMAIL:bschrib@gmail.com</DockerRunEnv>
+  <DockerRunEnv>PS_PASSWORD:fqa6fqt8mqv_QGQ0rkz</DockerRunEnv>
   <DockerRunRestart>unless-stopped</DockerRunRestart>
 </App>
