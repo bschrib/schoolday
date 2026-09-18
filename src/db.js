@@ -21,6 +21,7 @@ db.exec(`
     due           TEXT NOT NULL,
     est_minutes   INTEGER NOT NULL DEFAULT 0,
     status        TEXT NOT NULL DEFAULT 'open',
+    score         TEXT NOT NULL DEFAULT '',
     notes         TEXT NOT NULL DEFAULT '',
     fetched_at    TEXT NOT NULL,
     UNIQUE (source, external_id)
@@ -64,6 +65,13 @@ db.exec(`
 // Migrate pre-existing databases that predate the student column.
 try {
   db.exec(`ALTER TABLE assignments ADD COLUMN student TEXT NOT NULL DEFAULT ''`);
+} catch {
+  // column already present
+}
+
+// Migrate pre-existing databases that predate the score column.
+try {
+  db.exec(`ALTER TABLE assignments ADD COLUMN score TEXT NOT NULL DEFAULT ''`);
 } catch {
   // column already present
 }

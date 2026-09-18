@@ -260,6 +260,12 @@ async function icAssignmentsFor(personID) {
   if (!Array.isArray(list)) throw new Error('ic assignments: unexpected payload');
   return list.map((a) => {
     const done = Boolean(a.turnedIn) || (a.score != null && String(a.score).trim() !== '');
+    let score = '';
+    if (done && a.score != null && String(a.score).trim() !== '') {
+      score = String(a.score);
+      if (a.totalPoints != null) score += `/${a.totalPoints}`;
+      if (a.scorePercentage) score += ` (${a.scorePercentage}%)`;
+    }
     return {
       externalId: `${personID}:${a.groupActivityID}`,
       subject: subjectColorKey(a.courseName || ''),
@@ -268,7 +274,8 @@ async function icAssignmentsFor(personID) {
       due: a.dueDate || new Date().toISOString(),
       estMinutes: done ? 0 : 25,
       status: done ? 'done' : 'open',
-      notes: [a.comments, a.feedback].filter(Boolean).join(' · '),
+      score,
+      notes: [a.late ? 'Late' : '', a.comments, a.feedback].filter(Boolean).join(' · '),
     };
   });
 }
@@ -279,22 +286,28 @@ function infiniteCampusList() {
   if (!personID) throw new Error('infinitecampus list() needs IC_STUDENT_ID');
   return icAssignmentsFor(personID);
 }
-
-// --------------------------------------------------- parentsquare
-//
-// Rails portal: GET /signin/ for the authenticity token, POST /sessions with
-// the same cookie jar, then read the school's feed page and the account's
-// direct-message inbox (server-rendered HTML, parsed tolerantly).
-
 function psConfig() {
   const base = process.env.PS_BASE_URL; // https://www.parentsquare.com
   const email = process.env.PS_EMAIL;
   const password = process.env.PS_PASSWORD;
-  const schoolId = process.env.PS_SCHOOL_ID;
-  if (!base || !email || !password || !schoolId) {
-    throw new Error('parentsquare needs PS_BASE_URL, PS_EMAIL, PS_PASSWORD, PS_SCHOOL_ID');
+  if (!base || !email || !password) {
+    throw new Error('parentsquare needs PS_BASE_URL, PS_EMAIL, PS_PASSWORD');
   }
-  return { base, schoolId };
+  return { base };
+}
+
+/**
+ * Per-student ParentSquare school mapping (personID -> school id), e.g.
+ * {"44621":"52346","90972":"52355"}. Each student's page shows the feeds
+ * and direct messages of their own school.
+ */
+export function psStudentSchools() {
+  try {
+    const map = JSON.parse(process.env.PS_STUDENT_SCHOOLS || '{}');
+    return typeof map === 'object' && map ? map : {};
+  } catch {
+    return {};
+  }
 }
 
 async function psLogin() {
@@ -343,12 +356,15 @@ async function psGet(jar, url) {
 
 /**
  * School feed posts (the "Posts" page). Returns:
- *   [{ id, title, from, when (ISO), excerpt }]
+ *   { school, posts: [{ id, title, from, when (ISO), excerpt }] }
  */
-async function psFeeds() {
-  const { base, schoolId } = psConfig();
+async function psFeeds(schoolId) {
+  const { base } = psConfig();
+  const sid = schoolId || process.env.PS_SCHOOL_ID;
+  if (!sid) throw new Error('parentsquare needs a school id (PS_SCHOOL_ID or per-student mapping)');
   const { jar } = await psLogin();
-  const html = await psGet(jar, `${base}/schools/${schoolId}/feeds`);
+  const html = await psGet(jar, `${base}/schools/${sid}/feeds`);
+  const school = /<title>[^<]*\|\s*([^<|]+?)\s*\|\s*ParentSquare/.exec(html)?.[1] || '';
   const posts = [];
   for (const block of html.split('<li class="feeds-list-item">').slice(1)) {
     const id = /id="feed_(\d+)"/.exec(block)?.[1];
@@ -365,25 +381,27 @@ async function psFeeds() {
     }
     posts.push({ id, title, from, when, excerpt });
   }
-  return posts;
+  return { school, posts };
 }
 
 /**
  * Direct-message inbox (the "Messages" page). Returns:
  *   [{ id, recipient, messages, lastMessageAt, preview, href }]
  */
-async function psInbox() {
-  const { base, schoolId } = psConfig();
+async function psInbox(schoolId) {
+  const { base } = psConfig();
+  const sid = schoolId || process.env.PS_SCHOOL_ID;
+  if (!sid) throw new Error('parentsquare needs a school id (PS_SCHOOL_ID or per-student mapping)');
   const { jar } = await psLogin();
   // Discover the account's own user id from the feed page ("Manage account"
   // link), falling back to PS_USER_ID.
   let userId = process.env.PS_USER_ID;
   if (!userId) {
-    const feedsHtml = await psGet(jar, `${base}/schools/${schoolId}/feeds`);
+    const feedsHtml = await psGet(jar, `${base}/schools/${sid}/feeds`);
     userId = /href="\/schools\/\d+\/users\/(\d+)"[^>]*>Manage account/.exec(feedsHtml)?.[1];
   }
   if (!userId) throw new Error('ps: could not resolve account user id (set PS_USER_ID)');
-  const html = await psGet(jar, `${base}/schools/${schoolId}/users/${userId}/chats`);
+  const html = await psGet(jar, `${base}/schools/${sid}/users/${userId}/chats`);
   const threads = [];
   for (const block of html.split('data-testid="chat-thread-item-').slice(1)) {
     const id = block.slice(0, block.indexOf('"')).trim();
@@ -403,21 +421,21 @@ async function psInbox() {
   }
   return threads;
 }
-
-// ---------------------------------------------------------------- api
-
 export function providerFor(name) {
   switch (name) {
     case 'powerschool':
       return { name: 'powerschool', label: 'PowerSchool API', list: powerschoolList };
-    case 'infinitecampus':
+    case 'infinitecampus': {
+      const { base, app } = icConfig();
       return {
         name: 'infinitecampus',
         label: 'Infinite Campus',
         list: infiniteCampusList,
         students: icStudents,
         listFor: icAssignmentsFor,
+        portal: process.env.IC_PORTAL_URL || `${base}/campus/portal/parents/${app}.jsp`,
       };
+    }
     case 'demo':
     default:
       return { name: 'demo', label: 'Demo data (seeded)', list: () => Promise.resolve(demoList(new Date())) };

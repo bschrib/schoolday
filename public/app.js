@@ -51,8 +51,10 @@ function render(s) {
 
   renderDayband(s);
   renderLedgerToday(s);
+  renderOverdue(s);
   renderAhead(s);
   renderWeek(s);
+  renderRecent(s);
   renderStudents(s);
   renderMessages(s);
   renderSync(s);
@@ -182,6 +184,72 @@ function renderLedgerToday(s) {
   for (const row of s.ledger.today) host.appendChild(rowEl(row));
 }
 
+function renderOverdue(s) {
+  const host = $('ledgerOverdue');
+  host.innerHTML = '';
+  const rows = s.ledger.overdue || [];
+  if (rows.length === 0) {
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.textContent = 'Nothing past due.';
+    host.appendChild(e);
+    return;
+  }
+  for (const row of rows) host.appendChild(rowEl(row));
+}
+
+function renderRecent(s) {
+  const host = $('recentUpdates');
+  host.innerHTML = '';
+  const rows = (s.updates && s.updates.recent) || [];
+  if (rows.length === 0) {
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.textContent = 'No graded updates in the last two weeks.';
+    host.appendChild(e);
+    return;
+  }
+  for (const row of rows) {
+    const el = document.createElement('div');
+    el.className = 'update-row';
+
+    const main = document.createElement('div');
+    main.className = 'update-main';
+    const title = document.createElement('div');
+    title.className = 'row-title';
+    title.textContent = row.title;
+    main.appendChild(title);
+    if (row.course) {
+      const course = document.createElement('div');
+      course.className = 'row-course';
+      course.textContent = row.course;
+      main.appendChild(course);
+    }
+    if (row.notes) {
+      const note = document.createElement('div');
+      note.className = 'update-note';
+      note.textContent = row.notes;
+      main.appendChild(note);
+    }
+
+    const score = document.createElement('span');
+    score.className = 'score-chip';
+    score.textContent = row.score || '';
+
+    const when = document.createElement('span');
+    when.className = 'update-when';
+    when.textContent = whenLabel(row.dueKey);
+
+    el.append(main, score, when);
+    host.appendChild(el);
+  }
+}
+
+function whenLabel(dueKey) {
+  const [y, m, d] = dueKey.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 function renderAhead(s) {
   const host = $('ledgerNext');
   host.innerHTML = '';
@@ -270,6 +338,7 @@ function renderMessages(s) {
   threads.innerHTML = '';
   status.textContent = '';
   const m = s.messages;
+  $('msgSchool').textContent = m && m.school ? m.school : '';
   if (!m) {
     status.textContent = 'Waiting for the first pull…';
     return;
@@ -338,7 +407,18 @@ async function selectStudent(personID) {
   if (res.ok) refresh();
 }
 function renderSync(s) {
-  $('syncSource').textContent = s.sync.source;
+  const src = $('syncSource');
+  src.textContent = '';
+  if (s.portal && s.portal.url) {
+    const a = document.createElement('a');
+    a.href = s.portal.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = s.portal.label;
+    src.appendChild(a);
+  } else {
+    src.textContent = s.sync.source;
+  }
   $('syncLast').textContent = s.sync.lastPull ? relTime(s.sync.lastPull) : 'never';
   $('syncNext').textContent = s.sync.nextPollInSec > 0
     ? `in ${Math.max(1, Math.round(s.sync.nextPollInSec / 60))}m`

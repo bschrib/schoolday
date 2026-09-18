@@ -23,26 +23,33 @@ function startOfDayIso(d) {
  * min). The weekly view sums the next 7 days per subject so the family can
  * see where the weight actually lands. All day boundaries are local.
  */
+const RECENT_DAYS = 14;
+
 export function computeLoad(now = new Date(), student = '') {
   const todayKey = dayKey(now);
   const tomorrowKey = dayKey(new Date(now.getTime() + 86400000));
   const horizonKey = dayKey(new Date(now.getTime() + 7 * 86400000));
+  const recentStartKey = dayKey(new Date(now.getTime() - (RECENT_DAYS - 1) * 86400000));
 
+  // Window: the last two weeks (graded updates + past-due open work) through
+  // the next seven days.
   const rows = db
     .prepare(
-      `SELECT id, subject, course, title, due, est_minutes, status
+      `SELECT id, subject, course, title, due, est_minutes, status, score, notes
        FROM assignments
        WHERE due >= ? AND due <= ? AND student = ?
        ORDER BY due ASC`
     )
-    .all(startOfDayIso(now), startOfDayIso(new Date(now.getTime() + 7 * 86400000)), student);
+    .all(startOfDayIso(new Date(now.getTime() - (RECENT_DAYS - 1) * 86400000)), startOfDayIso(new Date(now.getTime() + 7 * 86400000)), student);
 
   let minutesToday = 0;
   const bySubject = new Map();
   const byDay = new Map();
   const todayRows = [];
+  const overdueRows = [];
   const tomorrowRows = [];
   const weekRows = [];
+  const recentRows = [];
 
   for (const r of rows) {
     const dueKey = dayKey(new Date(r.due));
@@ -57,20 +64,33 @@ export function computeLoad(now = new Date(), student = '') {
       dueKey,
       dueLabel: dueLabel(r.due),
       done,
+      score: r.score || '',
+      notes: r.notes || '',
     };
     if (dueKey === todayKey) {
       if (!done) minutesToday += r.est_minutes;
       todayRows.push(row);
+    } else if (dueKey < todayKey) {
+      if (!done) {
+        overdueRows.push(row);
+        minutesToday += r.est_minutes; // past-due work still lands on today
+      }
     } else if (dueKey === tomorrowKey) {
       tomorrowRows.push(row);
     } else if (dueKey > tomorrowKey && dueKey <= horizonKey) {
       weekRows.push(row);
     }
-    if (!done) {
+    if (!done && dueKey >= todayKey && dueKey <= horizonKey) {
       bySubject.set(r.subject, (bySubject.get(r.subject) || 0) + r.est_minutes);
       byDay.set(dueKey, (byDay.get(dueKey) || 0) + r.est_minutes);
     }
+    if (done && r.score && dueKey >= recentStartKey && dueKey <= todayKey) {
+      recentRows.push(row);
+    }
   }
+
+  overdueRows.sort((a, b) => new Date(b.due) - new Date(a.due));
+  recentRows.sort((a, b) => new Date(b.due) - new Date(a.due));
 
   const index = Math.min(100, Math.round((minutesToday / DAILY_TARGET_MINUTES) * 100));
   const subjects = [...bySubject.entries()]
@@ -84,10 +104,12 @@ export function computeLoad(now = new Date(), student = '') {
     minutesToday,
     target: DAILY_TARGET_MINUTES,
     today: todayRows,
+    overdue: overdueRows.slice(0, 10),
     tomorrow: tomorrowRows,
     week: weekRows,
     subjects,
     heaviestDay: heaviest ? { date: heaviest[0], minutes: heaviest[1] } : null,
+    recent: recentRows.slice(0, 12),
   };
 }
 

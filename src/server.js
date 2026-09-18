@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import db, { kvGet, kvSet } from './db.js';
 import bus from './bus.js';
 import queue from './queue.js';
-import { providerFor, parentsquare, subjectColorKey, dayKey } from './providers.js';
+import { providerFor, parentsquare, subjectColorKey, dayKey, psStudentSchools } from './providers.js';
 import { computeLoad } from './load.js';
 
 const PORT = Number(process.env.PORT || 4180);
@@ -57,14 +57,27 @@ function activeStudentName() {
   return hit ? studentName(hit) : '';
 }
 
-function cachedMessages() {
-  const raw = kvGet('ps_messages_cache');
+function cachedMessages(schoolId) {
+  const raw = kvGet(`ps_messages_cache_${schoolId}`);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
   } catch {
     return null;
   }
+}
+
+// The ParentSquare school the active student's page shows: the per-student
+// mapping (PS_STUDENT_SCHOOLS) wins, then the default PS_SCHOOL_ID.
+function studentPSchoolId() {
+  const mapped = psStudentSchools()[String(effectiveActiveStudentId())];
+  return mapped || process.env.PS_SCHOOL_ID || '';
+}
+
+function allPSchoolIds() {
+  const ids = new Set(Object.values(psStudentSchools()));
+  if (process.env.PS_SCHOOL_ID) ids.add(process.env.PS_SCHOOL_ID);
+  return [...ids];
 }
 
 // ------------------------------------------------------------- workers
@@ -87,8 +100,8 @@ queue.register('sync', async () => {
     rows = await provider.list(new Date());
   }
   const upsert = db.prepare(
-    `INSERT INTO assignments (id, source, external_id, student, subject, course, title, due, est_minutes, status, notes, fetched_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO assignments (id, source, external_id, student, subject, course, title, due, est_minutes, status, score, notes, fetched_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(source, external_id) DO UPDATE SET
        student = excluded.student,
        subject = excluded.subject,
@@ -97,6 +110,7 @@ queue.register('sync', async () => {
        due = excluded.due,
        est_minutes = excluded.est_minutes,
        status = CASE WHEN assignments.status = 'done' THEN 'done' ELSE excluded.status END,
+       score = excluded.score,
        notes = excluded.notes,
        fetched_at = excluded.fetched_at`
   );
@@ -106,23 +120,25 @@ queue.register('sync', async () => {
     upsert.run(
       id, provider.name, r.externalId, student,
       subjectColorKey(r.subject), r.course || '', r.title,
-      r.due, r.estMinutes || 0, r.status || 'open', r.notes || '', nowIso
+      r.due, r.estMinutes || 0, r.status || 'open', r.score || '', r.notes || '', nowIso
     );
   }
   db.prepare('UPDATE sync_runs SET finished_at = ?, status = ?, count = ? WHERE id = ?')
     .run(nowIso, 'ok', rows.length, runId);
   bus.publish('sync.completed', { source: provider.name, count: rows.length });
   const load = computeLoad(undefined, activeStudentName());
-  bus.publish('load.recomputed', { minutes: load.minutesToday, index: load.index });
-  // Best-effort: refresh the ParentSquare message cache in the same pass.
-  try {
-    const [feeds, threads] = await Promise.all([ps.feeds(), ps.inbox()]);
-    kvSet('ps_messages_cache', JSON.stringify({ at: Date.now(), feeds, threads, error: null }));
-    bus.publish('messages.refreshed', { feeds: feeds.length, threads: threads.length });
-  } catch (err) {
-    kvSet('ps_messages_cache', JSON.stringify({ at: Date.now(), feeds: [], threads: [], error: err.message }));
-    bus.publish('messages.error', { error: err.message });
+  // Best-effort: refresh each school's ParentSquare cache in the same pass,
+  // so switching students never shows the other kid's school.
+  for (const sid of allPSchoolIds()) {
+    try {
+      const [feeds, threads] = await Promise.all([ps.feeds(sid), ps.inbox(sid)]);
+      kvSet(`ps_messages_cache_${sid}`, JSON.stringify({ at: Date.now(), school: feeds.school, feeds: feeds.posts, threads, error: null }));
+    } catch (err) {
+      kvSet(`ps_messages_cache_${sid}`, JSON.stringify({ at: Date.now(), school: '', feeds: [], threads: [], error: err.message }));
+      bus.publish('messages.error', { error: err.message });
+    }
   }
+  bus.publish('messages.refreshed', { schools: allPSchoolIds().length });
   return { count: rows.length };
 });
 
@@ -198,7 +214,11 @@ function state() {
     },
     ledger: {
       today: load.today,
+      overdue: load.overdue,
       ahead: aheadGroups(load),
+    },
+    updates: {
+      recent: load.recent,
     },
     week: {
       subjects: load.subjects,
@@ -211,7 +231,8 @@ function state() {
       list: students.map(studentView),
       active: effectiveActiveStudentId(),
     },
-    messages: cachedMessages(),
+    messages: cachedMessages(studentPSchoolId()),
+    portal: provider.portal ? { label: provider.label, url: provider.portal } : null,
     sync: {
       source: provider.label,
       provider: provider.name,
@@ -271,19 +292,22 @@ const server = http.createServer(async (req, res) => {
       return json(res, 405, { error: 'method not allowed' });
     }
     if (req.method === 'GET' && url.pathname === '/api/messages') {
-      const cached = cachedMessages();
+      const sid = studentPSchoolId();
+      const cached = cachedMessages(sid);
       if (cached && Date.now() - cached.at < MSG_TTL_MS) return json(res, 200, cached);
       try {
-        const [feeds, threads] = await Promise.all([ps.feeds(), ps.inbox()]);
-        const data = { at: Date.now(), feeds, threads, error: null };
-        kvSet('ps_messages_cache', JSON.stringify(data));
+        const [feeds, threads] = await Promise.all([ps.feeds(sid), ps.inbox(sid)]);
+        const data = { at: Date.now(), school: feeds.school, feeds: feeds.posts, threads, error: null };
+        kvSet(`ps_messages_cache_${sid}`, JSON.stringify(data));
         return json(res, 200, data);
       } catch (err) {
-        return json(res, 200, { at: Date.now(), feeds: [], threads: [], error: err.message });
+        return json(res, 200, { at: Date.now(), school: '', feeds: [], threads: [], error: err.message });
       }
     }
     if (req.method === 'POST' && url.pathname === '/api/messages/refresh') {
-      kvSet('ps_messages_cache', JSON.stringify({ at: 0, feeds: [], threads: [], error: null }));
+      for (const sid of allPSchoolIds()) {
+        kvSet(`ps_messages_cache_${sid}`, JSON.stringify({ at: 0, school: '', feeds: [], threads: [], error: null }));
+      }
       queue.enqueue('sync');
       return json(res, 202, { ok: true });
     }

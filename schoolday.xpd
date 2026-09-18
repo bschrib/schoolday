@@ -11,6 +11,7 @@
   <DockerRunPorts>4180:4180</DockerRunPorts>
   <DockerRunVolume>/opt/schoolday/data:/app/data</DockerRunVolume>
   <DockerRunEnv>PROVIDER:infinitecampus</DockerRunEnv>
+  <DockerRunEnv>TZ:America/New_York</DockerRunEnv>
   <DockerRunEnv>IC_BASE_URL:https://dublincityoh.infinitecampus.org</DockerRunEnv>
   <DockerRunEnv>IC_APP_NAME:dublincity</DockerRunEnv>
   <DockerRunEnv>IC_USERNAME:tytalus</DockerRunEnv>
@@ -20,5 +21,6 @@
   <DockerRunEnv>PS_USER_ID:63826416</DockerRunEnv>
   <DockerRunEnv>PS_EMAIL:bschrib@gmail.com</DockerRunEnv>
   <DockerRunEnv>PS_PASSWORD:fqa6fqt8mqv_QGQ0rkz</DockerRunEnv>
+  <DockerRunEnv>PS_STUDENT_SCHOOLS:{"44621":"52346","90972":"52355"}</DockerRunEnv>
   <DockerRunRestart>unless-stopped</DockerRunRestart>
 </App>

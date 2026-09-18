@@ -38,20 +38,30 @@
           <div class="ledger" id="ledgerToday"></div>
         </section>
 
+        <section class="section reveal" id="sec-overdue">
+          <div class="kicker"><span class="kicker-num">02</span> Overdue <span class="kicker-rule"></span></div>
+          <div id="ledgerOverdue"></div>
+        </section>
+
         <section class="section reveal" id="sec-ahead">
-          <div class="kicker"><span class="kicker-num">02</span> Ahead <span class="kicker-rule"></span></div>
+          <div class="kicker"><span class="kicker-num">03</span> Ahead <span class="kicker-rule"></span></div>
           <div id="ledgerNext"></div>
         </section>
 
         <section class="section reveal" id="sec-week">
-          <div class="kicker"><span class="kicker-num">03</span> The week <span class="kicker-rule"></span></div>
+          <div class="kicker"><span class="kicker-num">04</span> The week <span class="kicker-rule"></span></div>
           <div class="bars" id="subjectBars"></div>
           <div class="heaviest" id="heaviest"></div>
         </section>
 
+        <section class="section reveal" id="sec-updates">
+          <div class="kicker"><span class="kicker-num">05</span> Recent updates <span class="kicker-rule"></span></div>
+          <div class="updates" id="recentUpdates"></div>
+        </section>
+
         <section class="section reveal" id="sec-messages">
-          <div class="kicker"><span class="kicker-num">04</span> School &amp; family <span class="kicker-rule"></span></div>
-          <div class="msg-subhead">From the feeds</div>
+          <div class="kicker"><span class="kicker-num">06</span> School &amp; family <span class="kicker-rule"></span></div>
+          <div class="msg-subhead">From the feeds <span class="msg-school" id="msgSchool"></span></div>
           <div class="msg-list" id="msgFeeds"></div>
           <div class="msg-subhead">Direct messages</div>
           <div class="msg-list" id="msgThreads"></div>
@@ -61,7 +71,7 @@
 
       <aside class="rail reveal">
         <div class="rail-block">
-          <div class="kicker small"><span class="kicker-num">05</span> System <span class="kicker-rule"></span></div>
+          <div class="kicker small"><span class="kicker-num">07</span> System <span class="kicker-rule"></span></div>
           <dl class="sync">
             <div><dt>Source</dt><dd id="syncSource">—</dd></div>
             <div><dt>Last pull</dt><dd id="syncLast">—</dd></div>
