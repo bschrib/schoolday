@@ -54,11 +54,25 @@ Then open `http://192.168.0.4:4180` from anywhere on the LAN.
 
 ```
 -e PROVIDER=infinitecampus \
--e IC_BASE_URL=https://<portal>.infinitecampus.com \
--e IC_API_TOKEN=... -e IC_STUDENT_ID=...
+-e IC_BASE_URL=https://dublincityoh.infinitecampus.org \
+-e IC_APP_NAME=dublincity \
+-e IC_USERNAME=... -e IC_PASSWORD=...
 ```
 
-or `PROVIDER=powerschool` with `PS_BASE_URL`, `PS_API_TOKEN`, `PS_SCHOOL_ID`.
+The Infinite Campus provider logs in through the parent portal (JSESSIONID
+session), lists the account's students, and pulls the active student's
+assignments. The active student is chosen in the UI (student chips) or via
+`POST /api/students {"personID": ...}`; the first student is the default.
+
+ParentSquare (the "School & family" section — feed posts + direct-message
+inbox) is enabled by:
+
+```
+-e PS_BASE_URL=https://www.parentsquare.com \
+-e PS_SCHOOL_ID=... -e PS_USER_ID=... \
+-e PS_EMAIL=... -e PS_PASSWORD=...
+```
+
 Until a provider is configured, the demo provider keeps the site alive with
 seeded data.
 
@@ -69,7 +83,34 @@ seeded data.
 | `PORT` | `4180` | HTTP port |
 | `DATA_DIR` | `/app/data` | SQLite location |
 | `PROVIDER` | `demo` | `demo` · `powerschool` · `infinitecampus` |
-| `STUDENT_NAME` | `Avery` | shown in the masthead |
+| `STUDENT_NAME` | `Avery` | fallback masthead name (IC provider uses the student's real name) |
 | `SCHOOL_NAME` | `Riverside Middle School` | shown in the system rail |
 | `POLL_INTERVAL_MS` | `600000` | sync cadence |
 | `DAILY_TARGET_MINUTES` | `180` | load-index denominator |
+| `IC_BASE_URL` | — | Infinite Campus portal base (e.g. `https://dublincityoh.infinitecampus.org`) |
+| `IC_APP_NAME` | `dublincity` | portal app name (login page + verify form) |
+| `IC_USERNAME` / `IC_PASSWORD` | — | parent-portal credentials (session login) |
+| `IC_JSESSIONID` | — | optional pasted cookie string to skip login |
+| `PS_BASE_URL` | — | ParentSquare base (e.g. `https://www.parentsquare.com`) |
+| `PS_SCHOOL_ID` / `PS_USER_ID` | — | school + account user id (inbox) |
+| `PS_EMAIL` / `PS_PASSWORD` | — | ParentSquare credentials |
+
+## Deploy (unRAID)
+
+```bash
+# on unRAID: load the image, then run
+gunzip -c deploy/schoolday-image.tar.gz | docker load
+docker run -d --name schoolday --restart=unless-stopped \
+  -p 4180:4180 -v /opt/schoolday/data:/app/data \
+  -e PROVIDER=infinitecampus \
+  -e IC_BASE_URL=https://dublincityoh.infinitecampus.org \
+  -e IC_APP_NAME=dublincity \
+  -e IC_USERNAME=... -e IC_PASSWORD=... \
+  -e PS_BASE_URL=https://www.parentsquare.com \
+  -e PS_SCHOOL_ID=... -e PS_USER_ID=... \
+  -e PS_EMAIL=... -e PS_PASSWORD=... \
+  schoolday:latest
+```
+
+Or install via the unRAID app store with `schoolday.xpd` (NewURL:
+`https://github.com/bschrib/schoolday`).
