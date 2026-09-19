@@ -1,0 +1,13 @@
+.git
+.github
+deploy
+data
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.tar.gz
+*.png
+*.md
+node_modules
+.DS_Store
