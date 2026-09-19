@@ -1,7 +1,7 @@
 <Container version="2">
   <Name>schoolday</Name>
-  <Repository>schoolday:latest</Repository>
-  <Registry />
+  <Repository>bschrib/schoolday:latest</Repository>
+  <Registry>ghcr.io</Registry>
   <Network />
   <Privileged>false</Privileged>
   <Support />
