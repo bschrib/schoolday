@@ -190,6 +190,9 @@ function state() {
   const lastSyncAt = kvGet('last_sync_at');
   const events = bus.recent(8);
   const students = cachedStudents();
+  const recentHref = provider.assignmentListUrl
+    ? provider.assignmentListUrl(effectiveActiveStudentId())
+    : null;
   return {
     student: student || STUDENT,
     school: SCHOOL,
@@ -218,7 +221,9 @@ function state() {
       ahead: aheadGroups(load),
     },
     updates: {
-      recent: load.recent,
+      recent: recentHref
+        ? load.recent.map((r) => ({ ...r, href: recentHref }))
+        : load.recent,
     },
     week: {
       subjects: load.subjects,
@@ -234,6 +239,12 @@ function state() {
     messages: cachedMessages(studentPSchoolId()),
     portal: provider.portal ? { label: provider.label, url: provider.portal } : null,
     psBase: process.env.PS_BASE_URL || '',
+    quickLinks: [
+      ...(provider.quickLinks || []),
+      ...(process.env.PS_BASE_URL && studentPSchoolId() && process.env.PS_USER_ID
+        ? [{ label: 'New message (ParentSquare)', url: `${process.env.PS_BASE_URL}/schools/${studentPSchoolId()}/users/${process.env.PS_USER_ID}/chats/new?private=true` }]
+        : []),
+    ],
     sync: {
       source: provider.label,
       provider: provider.name,

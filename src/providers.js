@@ -427,6 +427,7 @@ export function providerFor(name) {
       return { name: 'powerschool', label: 'PowerSchool API', list: powerschoolList };
     case 'infinitecampus': {
       const { base, app } = icConfig();
+      const nav = (tool) => `${base}/campus/nav-wrapper/parent/portal/parent/${tool}?appName=${app}`;
       return {
         name: 'infinitecampus',
         label: 'Infinite Campus',
@@ -434,6 +435,11 @@ export function providerFor(name) {
         students: icStudents,
         listFor: icAssignmentsFor,
         portal: process.env.IC_PORTAL_URL || `${base}/campus/portal/parents/${app}.jsp`,
+        quickLinks: [
+          { label: 'Mark absent', url: nav('attendance') },
+          { label: 'Message a teacher', url: nav('message-center') },
+        ],
+        assignmentListUrl: (personID) => `${nav('assignment-list')}&personID=${personID}`,
       };
     }
     case 'demo':

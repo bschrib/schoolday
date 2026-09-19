@@ -43,11 +43,20 @@ function render(s) {
   });
 
   const load = s.day;
-  $('loadNumber').textContent = load.loadIndex;
+  $('loadNumber').textContent = load.minutesToday;
+  $('loadScale').textContent = `of ${load.target} min`;
   const label = $('loadLabel');
   label.textContent = load.loadLabel;
   label.classList.toggle('hot', load.loadLabel === 'heavy' || load.loadLabel === 'crunch');
-  $('loadSub').textContent = `${load.minutesToday} of ${load.target} min today`;
+  $('loadSub').textContent = `${load.loadIndex}% of target`;
+  $('loadIndex').dataset.tip =
+    `Open minutes today: past-due work plus today's open assignments ` +
+    `(${load.minutesToday} min), against the ${load.target}-minute daily target. ` +
+    `That is ${load.loadIndex}% of the target.`;
+  $('loadMeta').dataset.tip =
+    `Load level from the share of the daily target that is open: ` +
+    `light < 25% · steady < 60% · heavy < 85% · crunch ≥ 85%. ` +
+    `Target is ${load.target} min (DAILY_TARGET_MINUTES).`;
 
   renderDayband(s);
   renderLedgerToday(s);
@@ -56,6 +65,7 @@ function render(s) {
   renderWeek(s);
   renderRecent(s);
   renderStudents(s);
+  renderQuickLinks(s);
   renderMessages(s);
   renderSync(s);
   renderEvents(s);
@@ -225,9 +235,18 @@ function renderRecent(s) {
 
     const main = document.createElement('div');
     main.className = 'update-main';
-    const title = document.createElement('div');
+    const title = document.createElement(row.href ? 'a' : 'div');
     title.className = 'row-title';
     title.textContent = row.title;
+    if (row.href) {
+      title.href = row.href;
+      title.target = '_blank';
+      title.rel = 'noopener';
+      const ext = document.createElement('span');
+      ext.className = 'ext';
+      ext.textContent = '\u2197';
+      title.appendChild(ext);
+    }
     main.appendChild(title);
     if (row.course) {
       const course = document.createElement('div');
@@ -337,6 +356,30 @@ function renderStudents(s) {
     chip.title = st.school || '';
     chip.addEventListener('click', () => selectStudent(st.personID));
     host.appendChild(chip);
+  }
+}
+
+function renderQuickLinks(s) {
+  const host = $('quickLinks');
+  host.innerHTML = '';
+  const links = (s && s.quickLinks) || [];
+  if (links.length === 0) {
+    host.hidden = true;
+    return;
+  }
+  host.hidden = false;
+  for (const l of links) {
+    const a = document.createElement('a');
+    a.className = 'quick-link';
+    a.href = l.url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = l.label;
+    const ext = document.createElement('span');
+    ext.className = 'ext';
+    ext.textContent = ' \u2197';
+    a.appendChild(ext);
+    host.appendChild(a);
   }
 }
 
