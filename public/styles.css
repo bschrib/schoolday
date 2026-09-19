@@ -437,6 +437,139 @@ body {
   color: var(--ink);
 }
 
+/* ----------------------------------------------------- week day strip */
+
+.week-overview {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: 20px;
+}
+
+.daystrip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 26px;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+@media (max-width: 640px) {
+  .daystrip { gap: 5px; }
+}
+
+.day-col {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.day-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.day-date {
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+.day-bar {
+  position: relative;
+  height: 64px;
+  background: var(--paper-deep);
+  border: 1px solid var(--hairline);
+  overflow: hidden;
+}
+
+.day-bar-fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: var(--other);
+  transition: height 0.9s var(--ease);
+}
+
+/* urgency levels */
+.day-col.urgent .day-bar-fill { background: var(--accent); }
+.day-col.crunch .day-bar-fill { background: oklch(44% 0.24 34); }
+.day-col.urgent .day-mins,
+.day-col.crunch .day-mins { color: var(--accent); font-weight: 600; }
+
+/* today marker */
+.day-col.today .day-name { color: var(--ink); }
+.day-col.today::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* heaviest flag */
+.day-flag {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.day-mins {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* today empty-state helpers */
+.empty.next-up {
+  margin-top: 8px;
+  color: var(--ink);
+  font-style: normal;
+}
+
+.empty.next-up strong {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.empty.next-up .next-up-when {
+  color: var(--ink-soft);
+}
+
+.empty.week-hint {
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-style: normal;
+}
+
 /* ------------------------------------------------------------- rail */
 
 .rail {

@@ -199,6 +199,22 @@ function renderLedgerToday(s) {
     e.className = 'empty';
     e.textContent = 'Nothing due today — a clean ledger.';
     host.appendChild(e);
+    const nextUp = s.day.nextUp;
+    if (nextUp) {
+      const n = document.createElement('div');
+      n.className = 'empty next-up';
+      n.innerHTML = `Next up: <strong></strong> <span class="next-up-when"></span>`;
+      n.querySelector('strong').textContent = nextUp.title;
+      n.querySelector('.next-up-when').textContent = `${whenLabel(nextUp.dueKey)} ${nextUp.dueLabel}`;
+      host.appendChild(n);
+    }
+    const w = s.week;
+    if (w.weekCount > 0) {
+      const wk = document.createElement('div');
+      wk.className = 'empty week-hint';
+      wk.textContent = `${w.weekCount} more item${w.weekCount === 1 ? '' : 's'} over the next seven days — see the week strip below.`;
+      host.appendChild(wk);
+    }
     return;
   }
   for (const row of s.ledger.today) host.appendChild(rowEl(row));
@@ -303,6 +319,8 @@ function renderAhead(s) {
 }
 
 function renderWeek(s) {
+  renderWeekOverview(s);
+  renderDayStrip(s);
   const host = $('subjectBars');
   host.innerHTML = '';
   if (s.week.subjects.length === 0) {
@@ -336,6 +354,55 @@ function renderWeek(s) {
     h.appendChild(strong);
   } else {
     h.textContent = '';
+  }
+}
+
+function renderWeekOverview(s) {
+  const el = $('weekOverview');
+  const w = s.week;
+  if (!w.weekCount) {
+    el.textContent = 'A quiet week — nothing open on the horizon.';
+    return;
+  }
+  el.textContent = `This week: ${w.weekCount} open item${w.weekCount === 1 ? '' : 's'} · ${fmtMins(w.weekMinutes)} open.`;
+}
+
+function renderDayStrip(s) {
+  const host = $('dayStrip');
+  host.innerHTML = '';
+  const days = s.week.days || [];
+  if (!days.length) {
+    host.hidden = true;
+    return;
+  }
+  host.hidden = false;
+  const todayKey = s.day.date;
+  const heaviestKey = s.week.heaviestDay ? s.week.heaviestDay.date : null;
+  const max = Math.max(1, ...days.map((d) => d.minutes));
+  for (const d of days) {
+    const col = document.createElement('div');
+    const isToday = d.key === todayKey;
+    const isHeaviest = d.key === heaviestKey && d.minutes > 0;
+    const urgent = d.level === 'heavy' || d.level === 'crunch';
+    col.className = 'day-col' + (isToday ? ' today' : '') + (urgent ? ' urgent' : '') + (d.level === 'crunch' ? ' crunch' : '');
+    col.dataset.tip = `${d.label} ${d.key.slice(8)}: ${d.minutes} min open across ${d.count} item${d.count === 1 ? '' : 's'} — ${d.level}.`;
+    const pct = Math.round((d.minutes / max) * 100);
+    col.innerHTML = `
+      <div class="day-head"><span class="day-name"></span><span class="day-date"></span></div>
+      <div class="day-bar"><div class="day-bar-fill"></div></div>
+      <div class="day-mins"></div>`;
+    col.querySelector('.day-name').textContent = d.label;
+    col.querySelector('.day-date').textContent = d.key.slice(8);
+    col.querySelector('.day-bar-fill').style.height = `${pct}%`;
+    const mins = col.querySelector('.day-mins');
+    mins.textContent = d.minutes > 0 ? fmtMins(d.minutes) : '—';
+    if (isHeaviest) {
+      const flag = document.createElement('span');
+      flag.className = 'day-flag';
+      flag.textContent = 'heaviest';
+      col.querySelector('.day-head').appendChild(flag);
+    }
+    host.appendChild(col);
   }
 }
 

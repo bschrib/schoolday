@@ -160,6 +160,11 @@ function dayLabelFor(key) {
   return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+function shortDay(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short' });
+}
+
 function aheadGroups(load) {
   const groups = new Map();
   const push = (row) => {
@@ -214,6 +219,7 @@ function state() {
         done: r.done,
         overdue: !r.done && new Date(r.due) < now,
       })),
+      nextUp: load.nextUp,
     },
     ledger: {
       today: load.today,
@@ -230,6 +236,9 @@ function state() {
       heaviestDay: load.heaviestDay
         ? { ...load.heaviestDay, label: dayLabelFor(load.heaviestDay.date) }
         : null,
+      days: load.days.map((d) => ({ ...d, label: shortDay(d.key) })),
+      weekMinutes: load.weekMinutes,
+      weekCount: load.weekCount,
     },
     students: {
       available: Boolean(provider.students),

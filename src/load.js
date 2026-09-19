@@ -43,8 +43,11 @@ export function computeLoad(now = new Date(), student = '') {
     .all(startOfDayIso(new Date(now.getTime() - (RECENT_DAYS - 1) * 86400000)), startOfDayIso(new Date(now.getTime() + 7 * 86400000)), student);
 
   let minutesToday = 0;
+  let openWeekCount = 0;
+  let nextUp = null;
   const bySubject = new Map();
   const byDay = new Map();
+  const byDayCount = new Map();
   const todayRows = [];
   const overdueRows = [];
   const tomorrowRows = [];
@@ -83,6 +86,9 @@ export function computeLoad(now = new Date(), student = '') {
     if (!done && dueKey >= todayKey && dueKey <= horizonKey) {
       bySubject.set(r.subject, (bySubject.get(r.subject) || 0) + r.est_minutes);
       byDay.set(dueKey, (byDay.get(dueKey) || 0) + r.est_minutes);
+      byDayCount.set(dueKey, (byDayCount.get(dueKey) || 0) + 1);
+      openWeekCount++;
+      if (!nextUp || new Date(r.due) < new Date(nextUp.due)) nextUp = row;
     }
     if (done && r.score && dueKey >= recentStartKey && dueKey <= todayKey) {
       recentRows.push(row);
@@ -98,6 +104,18 @@ export function computeLoad(now = new Date(), student = '') {
     .sort((a, b) => b.minutes - a.minutes);
   const heaviest = [...byDay.entries()].sort((a, b) => b[1] - a[1])[0];
 
+  // The 7-day strip: open minutes + urgency level for each of the next seven
+  // days, so the week's shape is obvious at a glance.
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const key = dayKey(new Date(now.getTime() + i * 86400000));
+    const minutes = byDay.get(key) || 0;
+    const count = byDayCount.get(key) || 0;
+    const levelPct = Math.min(100, Math.round((minutes / DAILY_TARGET_MINUTES) * 100));
+    days.push({ key, minutes, count, level: loadLabel(levelPct) });
+  }
+  const weekMinutes = subjects.reduce((a, s) => a + s.minutes, 0);
+
   return {
     index,
     label: loadLabel(index),
@@ -109,6 +127,12 @@ export function computeLoad(now = new Date(), student = '') {
     week: weekRows,
     subjects,
     heaviestDay: heaviest ? { date: heaviest[0], minutes: heaviest[1] } : null,
+    days,
+    weekMinutes,
+    weekCount: openWeekCount,
+    nextUp: nextUp
+      ? { id: nextUp.id, title: nextUp.title, subject: nextUp.subject, course: nextUp.course, due: nextUp.due, dueKey: nextUp.dueKey, dueLabel: nextUp.dueLabel }
+      : null,
     recent: recentRows.slice(0, 12),
   };
 }
