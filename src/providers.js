@@ -428,6 +428,7 @@ export function providerFor(name) {
     case 'infinitecampus': {
       const { base, app } = icConfig();
       const nav = (tool) => `${base}/campus/nav-wrapper/parent/portal/parent/${tool}?appName=${app}`;
+      const absenceUrl = `${base}/campus/nav-wrapper/parent/scanner/absenceRequests/portal/create?backTo=home&appName=${app}`;
       return {
         name: 'infinitecampus',
         label: 'Infinite Campus',
@@ -436,8 +437,7 @@ export function providerFor(name) {
         listFor: icAssignmentsFor,
         portal: process.env.IC_PORTAL_URL || `${base}/campus/portal/parents/${app}.jsp`,
         quickLinks: [
-          { label: 'Mark absent', url: nav('attendance') },
-          { label: 'Message a teacher', url: nav('message-center') },
+          { label: 'Mark absent', url: absenceUrl },
         ],
         assignmentListUrl: (personID) => `${nav('assignment-list')}&personID=${personID}`,
       };

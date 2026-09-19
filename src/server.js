@@ -242,7 +242,7 @@ function state() {
     quickLinks: [
       ...(provider.quickLinks || []),
       ...(process.env.PS_BASE_URL && studentPSchoolId() && process.env.PS_USER_ID
-        ? [{ label: 'New message (ParentSquare)', url: `${process.env.PS_BASE_URL}/schools/${studentPSchoolId()}/users/${process.env.PS_USER_ID}/chats/new?private=true` }]
+        ? [{ label: 'Message a teacher', url: `${process.env.PS_BASE_URL}/schools/${studentPSchoolId()}/users/${process.env.PS_USER_ID}/chats/new?private=true` }]
         : []),
     ],
     sync: {
